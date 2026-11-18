@@ -1,0 +1,18 @@
+{
+  "verdict": {
+    "decision": "Hold",
+    "n_errors": 0,
+    "n_warn_images": 38,
+    "n_images": 203,
+    "warn_ratio": 0.1872,
+    "reasons": [
+      "Tỉ lệ ảnh còn cảnh báo chưa duyệt là 38/203 = 18.72% (>= ngưỡng 10%)."
+    ]
+  },
+  "reviewed": 80,
+  "budget": 80,
+  "seconds": 7.9,
+  "exported": "/Users/phatvo/Documents/lab AI/DAY09/K5-L23-Day09-2A202603130-VoTienPhat-AutoQC-Pipeline-Lab/submission/export/clean_v1",
+  "config_sha1": "5cee21d7c3eb68c2756a293eacc58dc62aa6d4f3",
+  "review_sim_sha1": "7988ca22827f780a7043a2300490e679a1697154"
+}
