@@ -81,7 +81,21 @@ Thứ ba là nhầm lớp giữa các loại xe có hình dáng gần nhau (`car
 
 ## 5. Train: raw vs clean (tùy chọn, chấm riêng)
 
-Chưa chạy. Tôi tập trung vào phần lõi của pipeline và đánh giá chất lượng dữ liệu trên máy local (macOS, CPU), theo hướng dẫn `make check-core`.
+Thực nghiệm huấn luyện mô hình `yolo26n` trong `20 epoch` với `2 seed` trên Google Colab (T4 GPU):
+
+| biến thể | #ảnh train | số seed | map50 (TB ± độ lệch) | map50_95 (TB ± độ lệch) | precision (TB ± độ lệch) | recall (TB ± độ lệch) |
+|---|---|---|---|---|---|---|
+| raw | 224 | 2 | 0.726 ± 0.000 | 0.512 ± 0.004 | 0.764 ± 0.061 | 0.649 ± 0.028 |
+| clean | 203 | 2 | 0.699 ± 0.025 | 0.486 ± 0.013 | 0.796 ± 0.050 | 0.596 ± 0.049 |
+
+Chênh mAP50 (clean − raw) = **-0.027**.
+
+**Nhận xét và phân tích kết quả:**
+- **Đánh giá trung thực theo độ lệch chuẩn:** Độ chênh `mAP50` giữa `clean` và `raw` là `-0.027`, gần như ngang bằng với độ lệch chuẩn giữa các seed của biến thể `clean` (`± 0.025`, tức `|ΔmAP50| ≈ 1.08 × SD`). Với chỉ 2 seed và 20 epoch, mức chênh này nằm sát ngưỡng nhiễu ngẫu nhiên nên chưa thể kết luận bản `clean` kém hơn về năng lực tổng quát hóa; đáng chú ý là **Precision của `clean` tăng từ `0.764` lên `0.796` (+0.032)** nhờ loại bỏ được các box nhiễu và gán nhầm lớp.
+- **Ba giả thuyết giải thích hiện tượng `raw` có mAP50 cao hơn và cách kiểm chứng:**
+  1. **Rò rỉ dữ liệu test trong `raw` (`LEAK_TEST`):** Tập `raw` (224 ảnh) chứa **5 ảnh trùng trực tiếp với tập `test/`** (`img_0049`, `img_0101`, `img_0167`, `img_0174`, `img_0221`), làm mô hình ghi nhớ mẫu kiểm tra và kéo `mAP50` tăng giả tạo. *Cách kiểm:* Đánh giá lại cả hai checkpoint trên tập `test` đã loại bỏ 5 ảnh trùng này để đo năng lực thực chất.
+  2. **Bản xuất `clean_v1` đang ở trạng thái `HOLD` (còn sót nhãn thiếu):** Do ngân sách duyệt chỉ đạt 80/125 ảnh, trong `clean_v1` vẫn còn 38 ảnh mang cảnh báo chưa xử lý (gồm 13 ca `POSSIBLE_MISSING` chưa được bổ sung box), khiến mô hình học thiếu đối tượng và làm `Recall` giảm từ `0.649` xuống `0.596`. *Cách kiểm:* Duyệt nốt 38 ảnh tồn đọng để đạt trạng thái `Release` rồi huấn luyện lại.
+  3. **Quy mô tập train giảm (`203` vs `224` ảnh) và tập `test` nhỏ (`100` ảnh):** Số lượng mẫu train ít hơn 9.4% trong thời gian ngắn (20 epoch) cùng kích thước tập test nhỏ (100 ảnh) khiến dao động vài box dự đoán đã làm lệch mAP50 vài phần trăm. *Cách kiểm:* Tăng số seed lên 3–5 và kéo dài lên 50 epoch để giảm phương sai đánh giá.
 
 ## 6. Quyết định và ghi chú AI
 
